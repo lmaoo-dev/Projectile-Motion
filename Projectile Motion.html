@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Projectile Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf0f6;--fg:#10233a;--mut:#4d6079;--card:#fff;--ac:#ff5a36;--b:#2f6bff;--g:#0f9d8a;--ln:#c9d6e4;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1626;--fg:#e6eefb;--mut:#95a8c4;--card:#12243b;--ac:#ff7a59;--b:#6c93ff;--g:#35d0b8;--ln:#26405e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1626;--fg:#e6eefb;--mut:#95a8c4;--card:#12243b;--ac:#ff7a59;--b:#6c93ff;--g:#35d0b8;--ln:#26405e;color-scheme:dark}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font-family:'Space Grotesk',system-ui,sans-serif;overflow:hidden}
+#deck{flex:1;position:relative;min-height:0}
+.s{position:absolute;inset:0;padding:clamp(14px,3vw,40px) clamp(16px,6vw,80px);overflow-y:auto;opacity:0;visibility:hidden;transform:translateX(40px);transition:opacity .45s,transform .45s,visibility .45s;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.s.past{transform:translateX(-40px)}.s.on{opacity:1;visibility:visible;transform:none}
+h1{font-size:clamp(38px,8vw,88px);margin:0;line-height:1;letter-spacing:-.03em}
+h2{font-size:clamp(24px,3.8vw,42px);margin:0;letter-spacing:-.02em;line-height:1.1}
+h3{font-size:clamp(18px,2.4vw,26px);margin:0 0 8px}
+p,li{font-size:clamp(14px,1.7vw,19px);line-height:1.5;color:var(--mut);margin:0}
+ul{margin:0;padding-left:20px}
+.row{display:grid;grid-template-columns:1fr 1.4fr;gap:24px;align-items:center}.r2{grid-template-columns:1fr 1fr}
+@media(max-width:800px){.row,.r2{grid-template-columns:1fr}}
+.cv{height:clamp(190px,42vh,440px)}.cv.sm{height:clamp(170px,34vh,300px)}
+canvas{width:100%;height:100%;display:block;background:var(--card);border:1px solid var(--ln);border-radius:14px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px 15px}
+.card small{display:block;color:var(--mut);font-size:13px}.card b{font-size:clamp(20px,2.6vw,30px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.eq{font-family:ui-monospace,Menlo,monospace;color:var(--fg);font-size:clamp(15px,2vw,22px);margin-bottom:4px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+label{font-size:14px;color:var(--mut);display:flex;gap:8px;align-items:center}label b{color:var(--fg);min-width:34px}
+input[type=range]{accent-color:var(--ac);width:130px}
+button{font:inherit;font-size:15px;background:var(--card);color:var(--fg);border:1px solid var(--ln);border-radius:10px;padding:8px 14px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.sel{border-color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dg{color:var(--g);font-weight:700}.db{color:var(--b);font-weight:700}.do{color:var(--ac);font-weight:700}
+.s.on .rise{animation:rise .6s both;animation-delay:calc(var(--d,0)*.12s)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+#bar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px}
+#dots{display:flex;gap:7px}#dots span{width:9px;height:9px;border-radius:9px;background:var(--ln);cursor:pointer;transition:.3s}#dots span.a{width:26px;background:var(--ac)}
+#cnt{color:var(--mut);font-size:14px;min-width:46px;text-align:center}
+.opt{display:block;width:100%;text-align:left;margin:7px 0;font-size:clamp(14px,1.8vw,18px)}
+.opt.ok{background:color-mix(in srgb,var(--g) 22%,var(--card));border-color:var(--g)}.opt.no{background:color-mix(in srgb,#e03131 18%,var(--card));border-color:#e03131}
+#qz{max-width:760px}.big{font-size:clamp(48px,10vw,110px);font-weight:700;color:var(--ac);line-height:1}
+.pb{height:6px;background:var(--ln);border-radius:6px;overflow:hidden}.pb i{display:block;height:100%;background:var(--ac);transition:width .4s}
+@media(prefers-reduced-motion:reduce){.s,.s.on .rise{transition:none;animation:none}}
+</style></head><body>
+<div id="deck">
+
+<section class="s on">
+<h1 class="rise">Projectile<br>motion</h1>
+<p class="rise" style="--d:1;max-width:560px">What happens to anything thrown, kicked or launched once gravity takes over. Use the ← and → arrow keys to move through the slides.</p>
+<div class="cv sm rise" style="--d:2"><canvas id="c0"></canvas></div>
+</section>
+
+<section class="s"><div class="row">
+<div class="rise"><h2>Launch it, then gravity does the rest</h2><br>
+<p>A projectile is any object that moves under gravity alone after it is launched. Its path is a smooth curve called a parabola.</p><br>
+<p><span class="dg">Green</span> arrow: horizontal velocity. <span class="db">Blue</span> arrow: vertical velocity. <span class="do">Orange</span> arrow: the actual velocity. Watch the blue one shrink, flip and grow.</p></div>
+<div class="cv rise" style="--d:1"><canvas id="c1"></canvas></div></div></section>
+
+<section class="s">
+<h2 class="rise">Two motions that never interfere</h2>
+<p class="rise" style="--d:1">Drop one ball and fire another sideways at the same instant. They stay level all the way down, so sideways speed has no effect on the fall.</p>
+<div class="cv rise" style="--d:2"><canvas id="c2"></canvas></div>
+<div class="grid rise" style="--d:3"><div class="card"><b class="dg">Horizontal</b><p>No force, so acceleration is zero and speed is constant.</p></div><div class="card"><b class="db">Vertical</b><p>Gravity pulls down at g ≈ 9.8 m/s², so speed changes steadily.</p></div></div>
+</section>
+
+<section class="s"><div class="row">
+<div class="rise"><h2>Split the launch velocity</h2><br>
+<p>Any launch velocity splits into two parts using the launch angle θ.</p><br>
+<div class="ctl"><label>Speed <input type="range" data-k="v" min="5" max="50"><b data-o="v"></b>m/s</label>
+<label>Angle <input type="range" data-k="a" min="5" max="85"><b data-o="a"></b>°</label></div><br>
+<div class="stats"><div class="card"><small>vx = v₀ cos θ</small><b class="dg" data-s="vx"></b></div><div class="card"><small>vy = v₀ sin θ</small><b class="db" data-s="vy"></b></div><div class="card"><small>Unit</small><b>m/s</b></div></div></div>
+<div class="cv"><canvas id="c3"></canvas></div></div></section>
+
+<section class="s">
+<h2 class="rise">Five equations run the show</h2>
+<div class="grid">
+<div class="card rise" style="--d:1"><div class="eq">x = v₀ cos θ · t</div><p>Horizontal position</p></div>
+<div class="card rise" style="--d:2"><div class="eq">y = v₀ sin θ · t − ½ g t²</div><p>Vertical position</p></div>
+<div class="card rise" style="--d:3"><div class="eq">T = 2 v₀ sin θ / g</div><p>Time of flight</p></div>
+<div class="card rise" style="--d:4"><div class="eq">H = v₀² sin² θ / 2g</div><p>Maximum height</p></div>
+<div class="card rise" style="--d:5"><div class="eq">R = v₀² sin 2θ / g</div><p>Range on level ground</p></div>
+<div class="card rise" style="--d:6"><div class="eq">g = 9.8 m/s²</div><p>On Earth, with air resistance ignored</p></div></div>
+</section>
+
+<section class="s">
+<h2 class="rise">Launch lab</h2>
+<div class="ctl"><label>Speed <input type="range" data-k="v" min="5" max="50"><b data-o="v"></b>m/s</label>
+<label>Angle <input type="range" data-k="a" min="5" max="85"><b data-o="a"></b>°</label>
+<button data-pg="9.8">Earth</button><button data-pg="1.62">Moon</button><button data-pg="3.71">Mars</button><button data-pg="24.8">Jupiter</button>
+<button class="p" id="fire">Fire again</button></div>
+<div class="cv"><canvas id="c5"></canvas></div>
+<div class="stats"><div class="card"><small>Flight time</small><b data-s="T"></b> s</div><div class="card"><small>Max height</small><b data-s="H"></b> m</div><div class="card"><small>Range</small><b data-s="R"></b> m</div></div>
+</section>
+
+<section class="s">
+<h2 class="rise">Live graphs of the same flight</h2>
+<div class="ctl"><label>Speed <input type="range" data-k="v" min="5" max="50"><b data-o="v"></b>m/s</label>
+<label>Angle <input type="range" data-k="a" min="5" max="85"><b data-o="a"></b>°</label>
+<label>g <b data-o="g"></b>m/s²</label></div>
+<div class="row r2"><div class="cv"><canvas id="c6a"></canvas></div><div class="cv"><canvas id="c6b"></canvas></div></div>
+<p>Height rises and falls symmetrically. Vertical velocity crosses zero at the top, while horizontal velocity stays flat.</p>
+</section>
+
+<section class="s">
+<h2 class="rise">One range, two angles</h2>
+<div class="ctl"><label>Speed <input type="range" data-k="v" min="5" max="50"><b data-o="v"></b>m/s</label>
+<label>Angle <input type="range" data-k="a" min="5" max="85"><b data-o="a"></b>°</label>
+<button data-pa="30">30°</button><button data-pa="45">45°</button><button data-pa="60">60°</button></div>
+<div class="cv"><canvas id="c7"></canvas></div>
+<p>Angles that add up to 90° land in the same spot. The peak of the curve, at 45°, is the longest throw.</p>
+</section>
+
+<section class="s">
+<h2 class="rise">Where you see it, and what to remember</h2>
+<div class="grid">
+<div class="card rise" style="--d:1"><h3>Sports</h3><p>Basketball shots, javelin and football kicks all follow parabolas.</p></div>
+<div class="card rise" style="--d:2"><h3>Engineering</h3><p>Fountains, fireworks and water jets are designed with these equations.</p></div>
+<div class="card rise" style="--d:3"><h3>Space and safety</h3><p>Ballistics and landing-zone planning depend on projectile paths.</p></div></div>
+<ul class="rise" style="--d:4"><li>Horizontal and vertical motion are independent.</li><li>Horizontal velocity is constant; vertical acceleration is g downward.</li><li>At the top, vy = 0, but the projectile is still moving sideways.</li><li>Real air resistance shortens the range and makes the path asymmetric.</li></ul>
+</section>
+
+<section class="s"><div id="qz"></div></section>
+</div>
+
+<div id="bar"><button id="pv" aria-label="Previous slide">← Back</button><div id="dots"></div><span id="cnt"></span><button id="nx2" class="p" aria-label="Next slide">Next →</button></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],D=Math.PI/180;
+const S=$$('.s'),st={v:25,a:45,g:9.8,t0:0};let i=0,K={},now=0;
+const phys=()=>{const vx=st.v*Math.cos(st.a*D),vy=st.v*Math.sin(st.a*D),T=2*vy/st.g;return{vx,vy,T,H:vy*vy/(2*st.g),R:vx*T}};
+const colors=()=>{const s=getComputedStyle(document.documentElement),g=n=>s.getPropertyValue(n).trim();K={fg:g('--fg'),mut:g('--mut'),card:g('--card'),ac:g('--ac'),b:g('--b'),g:g('--g'),ln:g('--ln')}};
+const cv=id=>{const c=document.getElementById(id);return()=>{const r=c.getBoundingClientRect(),d=devicePixelRatio||1,W=Math.round(r.width*d),H=Math.round(r.height*d);if(c.width!==W||c.height!==H){c.width=W;c.height=H}const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,r.width,r.height);return{x,w:r.width,h:r.height}}};
+const txt=(x,s,X,Y,c,z,al)=>{x.fillStyle=c||K.mut;x.font=(z||13)+'px Space Grotesk,sans-serif';x.textAlign=al||'left';x.fillText(s,X,Y)};
+const dot=(x,X,Y,r,c)=>{x.beginPath();x.arc(X,Y,r,0,7);x.fillStyle=c;x.fill()};
+const ln=(x,a,b,c,d,col,w,dash)=>{x.beginPath();x.setLineDash(dash||[]);x.strokeStyle=col;x.lineWidth=w||1;x.moveTo(a,b);x.lineTo(c,d);x.stroke();x.setLineDash([])};
+const arr=(x,a,b,c,d,col)=>{ln(x,a,b,c,d,col,3);if(Math.hypot(c-a,d-b)<6)return;const g=Math.atan2(d-b,c-a);x.fillStyle=col;x.beginPath();x.moveTo(c,d);x.lineTo(c-10*Math.cos(g-.4),d-10*Math.sin(g-.4));x.lineTo(c-10*Math.cos(g+.4),d-10*Math.sin(g+.4));x.fill()};
+const fmt=v=>String(+v.toFixed(1));
+function chart(o){const{x,w,h}=o.ctx,L=44,R=14,Tp=28,B=28,nx=o.nx||4;
+const X=v=>L+(v-o.x0)/(o.x1-o.x0)*(w-L-R),Y=v=>h-B-(v-o.y0)/(o.y1-o.y0)*(h-B-Tp);
+for(let k=0;k<=4;k++){const yy=o.y0+(o.y1-o.y0)*k/4;ln(x,L,Y(yy),w-R,Y(yy),K.ln,1);txt(x,fmt(yy),L-6,Y(yy)+4,K.mut,11,'right')}
+for(let k=0;k<=nx;k++){const xx=o.x0+(o.x1-o.x0)*k/nx;txt(x,fmt(xx),X(xx),h-12,K.mut,11,'center')}
+if(o.y0<0&&o.y1>0)ln(x,L,Y(0),w-R,Y(0),K.mut,1.5);
+txt(x,o.xl||'time (s)',w-R,h-1,K.mut,11,'right');
+const lim=o.p==null?o.x1:o.x0+(o.x1-o.x0)*o.p;
+o.s.forEach((s,n)=>{x.beginPath();x.strokeStyle=s.c;x.lineWidth=2.8;for(let k=0;k<=120;k++){const t=o.x0+(lim-o.x0)*k/120;k?x.lineTo(X(t),Y(s.f(t))):x.moveTo(X(t),Y(s.f(t)))}x.stroke();
+if(o.p!=null)dot(x,X(lim),Y(s.f(lim)),5,s.c);dot(x,L+8+n*118,15,5,s.c);txt(x,s.n,L+17+n*118,19,K.fg,12)});
+return{X,Y}}
+const arcP=(x,x0,gy,R,H,c,dash)=>{x.beginPath();x.setLineDash(dash||[5,6]);x.strokeStyle=c;x.lineWidth=2;for(let p=0;p<=1.001;p+=.025){const X=x0+R*p,Y=gy-4*H*p*(1-p);p?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke();x.setLineDash([])};
+const prog=(dur)=>Math.min(((now-st.t0)/1000%(dur+1.4))/dur,1);
+const c0=cv('c0'),c1=cv('c1'),c2=cv('c2'),c3=cv('c3'),c5=cv('c5'),c6a=cv('c6a'),c6b=cv('c6b'),c7=cv('c7');
+const dr={};
+dr[0]=t=>{const{x,w,h}=c0(),gy=h-22,Sz=Math.min(w*.8,h*1.9),x0=w*.08;ln(x,0,gy,w,gy,K.ln,2);
+[[30,K.b],[45,K.ac],[60,K.g]].forEach(([a,c],n)=>{const R=Sz*Math.sin(2*a*D),H=Sz*Math.sin(a*D)**2/2;arcP(x,x0,gy,R,H,c);const p=(t*.3+n*.33)%1;dot(x,x0+R*p,gy-4*H*p*(1-p),8,c)});};
+dr[1]=t=>{const{x,w,h}=c1(),gy=h-30,x0=w*.1,R=w*.76,H=h*.5;ln(x,0,gy,w,gy,K.ln,2);arcP(x,x0,gy,R,H,K.mut);
+const p=(t*.2)%1,bx=x0+R*p,by=gy-4*H*p*(1-p),k=.2,dx=R*k,dy=-4*H*(1-2*p)*k;
+arr(x,bx,by,bx+dx,by,K.g);arr(x,bx,by,bx,by+dy,K.b);arr(x,bx,by,bx+dx,by+dy,K.ac);dot(x,bx,by,9,K.fg);
+txt(x,'launch',x0,gy+18,K.mut,12,'center');txt(x,'landing',x0+R,gy+18,K.mut,12,'center');txt(x,'highest point: vertical velocity = 0',x0+R/2,gy-H-10,K.mut,12,'center')};
+dr[2]=t=>{const{x,w,h}=c2(),gy=h-12,top=24,Tm=1.6,pm=(gy-top)/(.5*9.8*Tm*Tm),vp=w*.55/Tm,x0=w*.14,tt=Math.min(t%2.8,Tm);ln(x,0,gy,w,gy,K.ln,2);
+for(let k=0;k*.2<=tt+1e-6;k++){const tk=k*.2,y=top+.5*9.8*tk*tk*pm;ln(x,x0,y,x0+vp*tk,y,K.ln,1,[3,4]);dot(x,x0,y,4,K.b);dot(x,x0+vp*tk,y,4,K.ac)}
+const y=top+.5*9.8*tt*tt*pm;dot(x,x0,y,10,K.b);dot(x,x0+vp*tt,y,10,K.ac);
+txt(x,'dropped',x0+16,top+6,K.b,13);txt(x,'launched sideways',x0+16+vp*.0,top-8,K.ac,13)};
+dr[3]=t=>{const{x,w,h}=c3(),p=phys(),ox=46,oy=h-40,len=st.v*Math.min(w-110,h-90)/50,ex=ox+len*Math.cos(st.a*D),ey=oy-len*Math.sin(st.a*D);
+ln(x,ox,oy,w-10,oy,K.ln,2);ln(x,ox,oy,ox,12,K.ln,2);ln(x,ox,oy,ex,oy,K.g,3,[7,5]);ln(x,ex,oy,ex,ey,K.b,3,[7,5]);arr(x,ox,oy,ex,ey,K.ac);
+x.beginPath();x.strokeStyle=K.fg;x.lineWidth=1.5;x.arc(ox,oy,38,-st.a*D,0);x.stroke();txt(x,'θ',ox+44,oy-8,K.fg,15);
+txt(x,'vx',(ox+ex)/2,oy+18,K.g,14,'center');txt(x,'vy',ex+8,(oy+ey)/2,K.b,14);txt(x,'v₀',(ox+ex)/2-16,(oy+ey)/2-8,K.ac,14,'center');dot(x,ox,oy,6+Math.sin(t*3),K.fg)};
+dr[5]=()=>{const{x,w,h}=c5(),p=phys(),pl=44,pb=34,pt=34,sc=Math.min((w-pl-40)/Math.max(p.R,1),(h-pb-pt)/Math.max(p.H,1)),gy=h-pb,X=m=>pl+m*sc,Y=m=>gy-m*sc;
+ln(x,0,gy,w,gy,K.ln,2);const dur=Math.min(Math.max(p.T,2),5.5),tp=prog(dur)*p.T,yf=t=>p.vy*t-.5*st.g*t*t;
+x.beginPath();x.setLineDash([5,6]);x.strokeStyle=K.ln;x.lineWidth=2;for(let k=0;k<=80;k++){const t=p.T*k/80;k?x.lineTo(X(p.vx*t),Y(yf(t))):x.moveTo(X(p.vx*t),Y(yf(t)))}x.stroke();x.setLineDash([]);
+x.beginPath();x.strokeStyle=K.ac;x.lineWidth=3;for(let k=0;k<=80;k++){const t=tp*k/80;k?x.lineTo(X(p.vx*t),Y(yf(t))):x.moveTo(X(p.vx*t),Y(yf(t)))}x.stroke();
+if(tp>=p.T/2){ln(x,X(p.R/2),Y(p.H),X(p.R/2),gy,K.mut,1,[3,4]);txt(x,'H = '+p.H.toFixed(1)+' m',X(p.R/2)+8,Y(p.H)+16,K.mut,12)}
+txt(x,'0',pl,gy+18,K.mut,12,'center');txt(x,p.R.toFixed(1)+' m',X(p.R),gy+18,K.mut,12,'center');
+const bx=X(p.vx*tp),by=Y(yf(tp)),vy=p.vy-st.g*tp,kv=1.6;arr(x,bx,by,bx+p.vx*kv,by,K.g);arr(x,bx,by,bx,by-vy*kv,K.b);dot(x,bx,by,9,K.fg);
+txt(x,'t = '+tp.toFixed(2)+' s',14,22,K.fg,14);txt(x,'g = '+st.g+' m/s²',w-14,22,K.mut,13,'right')};
+dr[6]=()=>{const A=c6a(),B=c6b(),p=phys(),pr=prog(5.5);
+chart({ctx:A,x0:0,x1:p.T,y0:0,y1:Math.max(p.H*1.15,1),p:pr,s:[{n:'height y (m)',c:K.ac,f:t=>p.vy*t-.5*st.g*t*t}]});
+chart({ctx:B,x0:0,x1:p.T,y0:-p.vy*1.1,y1:Math.max(p.vx,p.vy)*1.1,p:pr,s:[{n:'vx (m/s)',c:K.g,f:()=>p.vx},{n:'vy (m/s)',c:K.b,f:t=>p.vy-st.g*t}]})};
+dr[7]=t=>{const C=c7(),Rm=st.v*st.v/st.g,r=a=>st.v*st.v*Math.sin(2*a*D)/st.g,m=chart({ctx:C,x0:0,x1:90,y0:0,y1:Rm*1.12,nx:6,xl:'launch angle (°)',s:[{n:'range R (m)',c:K.ac,f:r}]}),{x,w}=C;
+const a1=st.a,a2=90-a1,R1=r(a1),pu=6+2*Math.sin(t*4);
+ln(x,m.X(0),m.Y(R1),m.X(90),m.Y(R1),K.mut,1,[4,4]);ln(x,m.X(45),m.Y(0),m.X(45),m.Y(Rm),K.mut,1,[2,5]);txt(x,'45° = longest',m.X(45)+6,m.Y(Rm)+14,K.mut,12);
+dot(x,m.X(a1),m.Y(R1),pu,K.ac);dot(x,m.X(a2),m.Y(R1),pu,K.g);txt(x,a1+'° and '+a2+'° both reach '+R1.toFixed(1)+' m',w-16,22,K.fg,13,'right')};
+function loop(ms){now=ms;colors();dr[i]&&dr[i](ms/1000);requestAnimationFrame(loop)}
+function sync(){$$('input[data-k]').forEach(e=>e.value=st[e.dataset.k]);$$('[data-o]').forEach(e=>e.textContent=e.dataset.o==='g'?st.g.toFixed(2):st[e.dataset.o]);
+const p=phys();$$('[data-s]').forEach(e=>e.textContent=p[e.dataset.s].toFixed(1));
+$$('[data-pg]').forEach(b=>b.classList.toggle('sel',Math.abs(+b.dataset.pg-st.g)<.01));$$('[data-pa]').forEach(b=>b.classList.toggle('sel',+b.dataset.pa===st.a))}
+const rs=()=>st.t0=performance.now();
+document.addEventListener('input',e=>{const k=e.target.dataset.k;if(k){st[k]=+e.target.value;sync();rs()}});
+document.addEventListener('click',e=>{const d=e.target.dataset;if(d.pg){st.g=+d.pg;sync();rs()}if(d.pa){st.a=+d.pa;sync()}if(e.target.id==='fire')rs()});
+const dots=$('#dots');S.forEach((_,n)=>{const b=document.createElement('span');b.onclick=()=>go(n);dots.append(b)});
+function go(n){n=Math.max(0,Math.min(S.length-1,n));i=n;S.forEach((s,k)=>{s.classList.toggle('on',k===i);s.classList.toggle('past',k<i)});
+[...dots.children].forEach((d,k)=>d.classList.toggle('a',k===i));$('#cnt').textContent=(i+1)+' / '+S.length;$('#pv').style.opacity=i?1:.4;$('#nx2').style.opacity=i<S.length-1?1:.4;
+if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();rs()}
+$('#pv').onclick=()=>go(i-1);$('#nx2').onclick=()=>go(i+1);
+addEventListener('keydown',e=>{const k=e.key;
+if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();go(i+1)}else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();go(i-1)}else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
+else if(i===9&&/^[1-4]$/.test(k)){const b=$$('.opt')[k-1];b&&b.click()}});
+let sx=null;addEventListener('touchstart',e=>{sx=e.target.closest('input,canvas')?null:e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>60)go(i+(d<0?1:-1));sx=null});
+/* quiz */
+const Q=[
+{q:'At the very top of its flight (no air resistance), which quantity is zero?',o:['Horizontal velocity','Vertical velocity','Acceleration','Speed'],a:1,e:'Gravity has used up the upward motion for an instant. Horizontal velocity is unchanged, so the speed is not zero, and gravity still acts.'},
+{q:'On level ground, which launch angle gives the longest range?',o:['30°','45°','60°','90°'],a:1,e:'R = v₀² sin 2θ / g is largest when sin 2θ = 1, which happens at θ = 45°.'},
+{q:'Same speed, launched at 30° and at 60°. How do the ranges compare?',o:['30° goes farther','60° goes farther','They are equal','It depends on the mass'],a:2,e:'Angles that add up to 90° give the same value of sin 2θ, so the ranges match.'},
+{q:'What is the horizontal acceleration of a projectile with no air resistance?',o:['9.8 m/s²','Zero','It depends on the angle','−9.8 m/s²'],a:1,e:'No horizontal force acts, so horizontal velocity stays constant.'},
+{q:'The same shot is taken on the Moon (g ≈ 1.6 m/s²). Compared with Earth, the range is…',o:['Smaller','The same','Larger','Zero'],a:2,e:'R is inversely proportional to g, so weaker gravity sends the projectile much farther.'}];
+let qi=0,sc=0,an=false;
+function rq(){const el=$('#qz');
+if(qi>=Q.length){const m=sc===Q.length?'Perfect. You have projectile motion down.':sc>=3?'Solid work. Revisit the slides you missed.':'Go back through the slides and try the launch lab, then retry.';
+el.innerHTML='<h2>Your score</h2><div class="big">'+sc+' / '+Q.length+'</div><p>'+m+'</p><br><button class="p" id="rt">Try again</button>';return}
+const q=Q[qi];el.innerHTML='<div class="pb"><i style="width:'+(qi/Q.length*100)+'%"></i></div><p>Question '+(qi+1)+' of '+Q.length+' · press 1–4 to answer</p><h2>'+q.q+'</h2><div>'+q.o.map((t,j)=>'<button class="opt" data-j="'+j+'"><b>'+(j+1)+'</b>&nbsp; '+t+'</button>').join('')+'</div><p id="fb"></p><br><button class="p" id="qn" hidden>'+(qi<Q.length-1?'Next question':'See score')+'</button>'}
+$('#qz').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+if(b.id==='rt'){qi=0;sc=0;an=false;rq();return}if(b.id==='qn'){qi++;an=false;rq();return}
+if(b.dataset.j==null||an)return;an=true;const q=Q[qi],j=+b.dataset.j;$$('.opt').forEach((o,k)=>{if(k===q.a)o.classList.add('ok')});
+if(j===q.a){sc++;$('#fb').innerHTML='<b class="dg">Correct.</b> '+q.e}else{b.classList.add('no');$('#fb').innerHTML='<b class="do">Not quite.</b> '+q.e}$('#qn').hidden=false});
+sync();rq();go(0);requestAnimationFrame(loop);
+</script></body></html>
